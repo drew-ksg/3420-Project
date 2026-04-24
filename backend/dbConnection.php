@@ -1,22 +1,21 @@
 <?php
-require("secrets.php");
+require(__DIR__ . "/secrets.php");
 
 
 
 function connect(){
 
     $servername = "localhost";
-    $username = "username";
-    $password = "password";
-    $dbname = "mydb";
+    global $username, $password, $dbName;
+    
     
     try {
-        $conn = new PDO("mysql:host=$servername;dbname=$dbname", $username, $password);
+        $conn = new PDO("mysql:host=$servername;dbname=$dbName", $username, $password);
         $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        echo "Connected successfully";
+        return $conn;
     }
     catch(PDOException $e) {
-    echo "Connection failed: " . $e->getMessage();
+    return NULL;
 }
 }
 
@@ -26,4 +25,4 @@ function connect(){
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-?>
+?>      
