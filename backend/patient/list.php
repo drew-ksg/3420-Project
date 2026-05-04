@@ -1,5 +1,7 @@
 <?php
 #List all patient info using the patientView
+#Maybe add so that it grabs specfic patients not all
+
 require("../dbConnection.php");
 
 $conn = connect();
