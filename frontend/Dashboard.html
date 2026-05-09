@@ -634,18 +634,14 @@
     let nextPatientID = 100;
 
     const providerID = sessionStorage.getItem("providerID") || "1";
+    const medAssistantID = sessionStorage.getItem("medAssistantID") || "";
+    const scheduleDate = new Date().toISOString().split("T")[0];
     const providerUsername = sessionStorage.getItem("username") || "Provider";
     providerMeta.textContent = `Signed in as ${providerUsername} | Provider ID: ${providerID}`;
 
     const schedule = {};
 
-    // Temporary in-browser mock patients. Replace with backend patient search later.
-    const patients = [
-      { patientID: "1", firstName: "John", lastName: "Doe", dob: "1990-01-01", email: "johndoe@email.com", phone: "661-555-1001" },
-      { patientID: "2", firstName: "Jane", lastName: "Smith", dob: "1985-05-12", email: "janesmith@email.com", phone: "661-555-1002" },
-      { patientID: "3", firstName: "Michael", lastName: "Brown", dob: "1989-05-22", email: "mbrown@email.com", phone: "661-555-1003" },
-      { patientID: "4", firstName: "Maria", lastName: "Lopez", dob: "1989-05-22", email: "mlopez@email.com", phone: "661-555-1004" }
-    ];
+    let patients = [];
 
     function formatTime(hour, minute) {
       const suffix = hour >= 12 ? "PM" : "AM";
@@ -666,6 +662,35 @@
         schedule[time] = [];
         current.setMinutes(current.getMinutes() + 15);
       }
+    }
+      
+    async function loadAppointments() {
+      const response = await fetch(`../backend/appointment/listForDay.php?date=${scheduleDate}`);
+      const appointments = await response.json();
+
+      Object.keys(schedule).forEach(time => {
+        schedule[time] = [];
+      });
+
+      appointments.forEach(appt => {
+        const timeLabel = getTimeLabelFromDateTime(appt.apptDate);
+
+        if (!schedule[timeLabel]) {
+          schedule[timeLabel] = [];
+        }
+
+        schedule[timeLabel].push({
+          appointmentID: Number(appt.appointmentID),
+          patientID: String(appt.patientID),
+          firstName: appt.firstName,
+          lastName: appt.lastName,
+          dob: appt.dob,
+          reasonForVisit: appt.reasonForVisit,
+          checkInTime: formatDatabaseTime(appt.checkInTime),
+          checkOutTime: formatDatabaseTime(appt.checkOutTime)
+        });
+      });
+      renderSchedule();
     }
 
     function renderSchedule() {
@@ -768,26 +793,22 @@
       document.getElementById("scheduleReason").value = patientOrAppointment.reasonForVisit || "";
     }
 
-    function searchPatients() {
-      const firstName = document.getElementById("scheduleFirstName").value.trim().toLowerCase();
-      const lastName = document.getElementById("scheduleLastName").value.trim().toLowerCase();
-      const patientID = document.getElementById("schedulePatientID").value.trim().toLowerCase();
+    async function searchPatients() {
+      const firstName = document.getElementById("scheduleFirstName").value.trim();
+      const lastName = document.getElementById("scheduleLastName").value.trim();
+      const patientID = document.getElementById("schedulePatientID").value.trim();
       const dob = document.getElementById("scheduleDOB").value.trim();
 
-      if (!firstName && !lastName && !patientID && !dob) {
+      const term = firstName || lastName || patientID || dob;
+
+      if (!term) {
         patientSearchResults.className = "search-results";
         patientSearchResults.innerHTML = "";
         return;
       }
 
-      const matches = patients.filter(patient => {
-        return (
-          (firstName && patient.firstName.toLowerCase().includes(firstName)) ||
-          (lastName && patient.lastName.toLowerCase().includes(lastName)) ||
-          (patientID && String(patient.patientID).toLowerCase().includes(patientID)) ||
-          (dob && patient.dob === dob)
-        );
-      });
+      const response = await fetch(`../backend/patient/search.php?term=${encodeURIComponent(term)}`);
+      const matches = await response.json();
 
       if (matches.length === 0) {
         patientSearchResults.className = "search-results show";
@@ -822,52 +843,97 @@
         return;
       }
 
-      const appointment = {
-        appointmentID: editingAppointmentID || nextAppointmentID++,
-        patientID,
-        firstName,
-        lastName,
-        dob,
-        reasonForVisit,
-        checkInTime: editingAppointmentID ? getExistingAppointmentValue("checkInTime") : null,
-        checkOutTime: editingAppointmentID ? getExistingAppointmentValue("checkOutTime") : null
-      };
+      const formData = new FormData();
+      formData.append("patientID", patientID);
+      formData.append("providerID", providerID);
+      formData.append("medAssistantID", medAssistantID);
+      formData.append("apptDate", makeDateTime(scheduleDate, activeTimeSlot));
+      formData.append("reasonForVisit", reasonForVisit);
 
       if (editingAppointmentID) {
-        const index = schedule[activeTimeSlot].findIndex(item => item.appointmentID === editingAppointmentID);
-        schedule[activeTimeSlot][index] = appointment;
+        formData.append("appointmentID", editingAppointmentID);
+
+        await fetch("../backend/appointment/updateDashboardApp.php", {
+          method: "POST",
+          body: formData
+        });
       } else {
-        schedule[activeTimeSlot].push(appointment);
+        await fetch("../backend/appointment/createDashboardApp.php", {
+          method: "POST",
+          body: formData
+        });
       }
 
-      // TODO: Replace local schedule update with backend call to create/update appointment.
-      // Example target: ../backend/appointment/createApp.php or updateApp.php
-
-      renderSchedule();
+      await loadAppointments();
       closeScheduleModal();
-    }
+    }    
 
     function getExistingAppointmentValue(key) {
       const appt = schedule[activeTimeSlot].find(item => item.appointmentID === editingAppointmentID);
       return appt ? appt[key] : null;
     }
 
-    function checkInPatient(time, appointmentID) {
-      const appt = schedule[time].find(item => item.appointmentID === appointmentID);
-      if (appt) {
-        appt.checkInTime = currentClockTime();
-        // TODO: Save check-in time to database once a backend endpoint exists.
-        renderSchedule();
-      }
+    async function checkInPatient(time, appointmentID) {
+      const formData = new FormData();
+      formData.append("appointmentID", appointmentID);
+
+      await fetch("../backend/appointment/checkIn.php", {
+        method: "POST",
+        body: formData
+      });
+
+      await loadAppointments();
     }
 
-    function checkOutPatient(time, appointmentID) {
-      const appt = schedule[time].find(item => item.appointmentID === appointmentID);
-      if (appt) {
-        appt.checkOutTime = currentClockTime();
-        // TODO: Save check-out time to database once a backend endpoint exists.
-        renderSchedule();
+    function makeDateTime(date, timeLabel) {
+      const [timePart, suffix] = timeLabel.split(" ");
+      let [hours, minutes] = timePart.split(":").map(Number);
+
+      if (suffix === "PM" && hours !== 12) {
+        hours += 12;
       }
+
+      if (suffix === "AM" && hours === 12) {
+        hours = 0;
+      }
+
+      return `${date} ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+      }
+
+    function getTimeLabelFromDateTime(dateTime) {
+      const date = new Date(dateTime.replace(" ", "T"));
+      return formatTime(date.getHours(), date.getMinutes());
+    }
+
+    function formatDatabaseTime(dateTime) {
+      if (!dateTime) return null;
+
+      const date = new Date(dateTime.replace(" ", "T"));
+      let hours = date.getHours();
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const suffix = hours >= 12 ? "PM" : "AM";
+
+      hours = hours % 12 || 12;
+
+      return `${hours}:${minutes} ${suffix}`;
+    }
+
+    async function checkOutPatient(time, appointmentID) {
+      const appt = schedule[time].find(item => item.appointmentID === appointmentID);
+
+      if (!appt || !appt.checkInTime) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("appointmentID", appointmentID);
+
+      await fetch("../backend/appointment/checkOut.php", {
+        method: "POST",
+        body: formData
+      });
+
+      await loadAppointments();
     }
 
     // TODO: Save deletion to database using backend/appointment/deleteApp.php.
@@ -883,14 +949,18 @@
       document.getElementById("deleteModalBackdrop").classList.remove("show");
     }
 
-    function confirmDeleteAppointment() {
+    async function confirmDeleteAppointment() {
       if (pendingDeleteTime === null || pendingDeleteAppointmentID === null) return;
 
-      schedule[pendingDeleteTime] = schedule[pendingDeleteTime].filter(
-        item => item.appointmentID !== pendingDeleteAppointmentID
-      );
+      const formData = new FormData();
+      formData.append("appointmentID", pendingDeleteAppointmentID);
 
-      renderSchedule();
+      await fetch("../backend/appointment/deleteDashboardApp.php", {
+        method: "POST",
+        body: formData
+      });
+
+      await loadAppointments();
       closeDeleteModal();
     }
 
@@ -911,36 +981,55 @@
     }
 
     async function addNewPatient() {
-      const newPatient = {
-        patientID: String(nextPatientID++),
-        firstName: document.getElementById("newFirstName").value.trim(),
-        lastName: document.getElementById("newLastName").value.trim(),
-        dob: document.getElementById("newDOB").value,
-        gender: document.getElementById("newGender").value.trim(),
-        email: document.getElementById("newEmail").value.trim(),
-        phone: document.getElementById("newPhone").value.trim(),
-        address: document.getElementById("newAddress").value.trim(),
-        insuranceProvider: document.getElementById("newInsuranceName").value.trim(),
-        insuranceID: document.getElementById("newInsuranceID").value.trim(),
-        allergies: document.getElementById("newAllergies").value.trim(),
-        medications: document.getElementById("newMedications").value.trim(),
-        medicalHistory: document.getElementById("newMedicalHistory").value.trim()
-      };
+      const firstName = document.getElementById("newFirstName").value.trim();
+      const lastName = document.getElementById("newLastName").value.trim();
+      const dob = document.getElementById("newDOB").value;
+      const gender = document.getElementById("newGender").value.trim();
+      const email = document.getElementById("newEmail").value.trim();
+      const phone = document.getElementById("newPhone").value.trim();
+      const address = document.getElementById("newAddress").value.trim();
+      const insuranceProvider = document.getElementById("newInsuranceName").value.trim();
+      const insuranceID = document.getElementById("newInsuranceID").value.trim();
+      const allergies = document.getElementById("newAllergies").value.trim();
+      const medications = document.getElementById("newMedications").value.trim();
+      const medicalHistory = document.getElementById("newMedicalHistory").value.trim();
 
-      if (!newPatient.firstName || !newPatient.lastName || !newPatient.dob || !newPatient.insuranceProvider || !newPatient.insuranceID) {
+      if (!firstName || !lastName || !dob || !insuranceProvider || !insuranceID) {
         showNewPatientMessage("Please enter first name, last name, DOB, insurance name, and insurance ID.", "error");
         return;
       }
 
-      // TODO: Replace this mock insertion with POST to ../backend/patient/create.php.
-      // The backend should return the newly created patientID, then that ID should be used below.
-      patients.push(newPatient);
+      const formData = new FormData();
+      formData.append("firstName", firstName);
+      formData.append("lastName", lastName);
+      formData.append("dob", dob);
+      formData.append("gender", gender);
+      formData.append("email", email);
+      formData.append("phone", phone);
+      formData.append("address", address);
+      formData.append("insuranceProvider", insuranceProvider);
+      formData.append("insuranceID", insuranceID);
+      formData.append("allergies", allergies);
+      formData.append("medications", medications);
+      formData.append("medicalHistory", medicalHistory);
+
+      const response = await fetch("../backend/patient/create.php", {
+        method: "POST",
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.status !== "success") {
+        showNewPatientMessage(result.message || "Could not add patient.", "error");
+        return;
+      }
 
       fillScheduleForm({
-        patientID: newPatient.patientID,
-        firstName: newPatient.firstName,
-        lastName: newPatient.lastName,
-        dob: newPatient.dob,
+        patientID: result.patientID,
+        firstName,
+        lastName,
+        dob,
         reasonForVisit: ""
       });
 
@@ -998,7 +1087,7 @@
     }
 
     buildTimeSlots();
-    renderSchedule();
+    loadAppointments();
   </script>
 </body>
 </html>
