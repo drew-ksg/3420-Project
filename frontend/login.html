@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADA Clinic Login</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #90EE90;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .login-page {
+      width: 100%;
+      max-width: 1050px;
+      min-height: 620px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+    }
+
+    .brand-panel {
+      background: linear-gradient(180deg, #0f570f, #0b3f0b);
+      color: #ffffff;
+      padding: 48px 42px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .brand-title {
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .brand-subtitle {
+      font-size: 17px;
+      line-height: 1.5;
+      opacity: 0.95;
+    }
+
+    .system-list {
+      margin-top: 44px;
+      list-style: none;
+    }
+
+    .system-list li {
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+      font-size: 15px;
+    }
+
+    .brand-footer {
+      font-size: 13px;
+      opacity: 0.8;
+      line-height: 1.5;
+    }
+
+    .login-panel {
+      padding: 58px 68px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .login-header {
+      margin-bottom: 34px;
+    }
+
+    .login-header h1 {
+      color: #0f570f;
+      font-size: 30px;
+      margin-bottom: 10px;
+    }
+
+    .login-header p {
+      color: #4f5f4f;
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #263326;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #c9d6c9;
+      border-radius: 5px;
+      font-size: 15px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: #0f570f;
+      box-shadow: 0 0 0 3px rgba(15, 87, 15, 0.14);
+    }
+
+    .login-button {
+      width: 100%;
+      border: none;
+      background: #0f570f;
+      color: #ffffff;
+      padding: 14px;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .login-button:hover {
+      background: #0b430b;
+    }
+
+    .login-button:active {
+      transform: scale(0.99);
+    }
+
+    .login-button:disabled {
+      opacity: 0.75;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.success {
+      display: block;
+      background: #e8f7e8;
+      color: #0f570f;
+      border: 1px solid #b7dfb7;
+    }
+
+    .message.error {
+      display: block;
+      background: #fdecec;
+      color: #9a1c1c;
+      border: 1px solid #e8b6b6;
+    }
+
+    .help-text {
+      margin-top: 28px;
+      color: #5f6f5f;
+      font-size: 13px;
+      line-height: 1.5;
+      border-top: 1px solid #e3e8e3;
+      padding-top: 18px;
+    }
+
+    @media (max-width: 800px) {
+      .login-page {
+        grid-template-columns: 1fr;
+      }
+
+      .brand-panel {
+        padding: 32px 28px;
+      }
+
+      .brand-footer {
+        margin-top: 32px;
+      }
+
+      .login-panel {
+        padding: 38px 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="login-page">
+    <section class="brand-panel">
+      <div>
+        <div class="brand-title">ADA Clinic</div>
+        <p class="brand-subtitle">
+          Secure clinic portal for providers, medical assistants, and patients.
+        </p>
+
+        <ul class="system-list">
+          <li>Patient profile and appointment access</li>
+          <li>Provider and medical assistant workflows</li>
+          <li>Role-based portal routing after sign-in</li>
+        </ul>
+      </div>
+
+      <p class="brand-footer">
+        Account creation is handled by authorized clinic staff. Please contact the clinic if you need access.
+      </p>
+    </section>
+
+    <section class="login-panel">
+      <div class="login-header">
+        <h1>Sign in</h1>
+        <p>Use your assigned clinic portal username and password to continue.</p>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required />
+        </div>
+
+        <button class="login-button" id="loginButton" type="submit">Sign In</button>
+      </form>
+
+      <div id="message" class="message"></div>
+
+      <p class="help-text">
+        This portal does not support public account registration. Patient, provider, and medical assistant accounts are created inside the clinic system.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const messageBox = document.getElementById("message");
+    const loginButton = document.getElementById("loginButton");
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      messageBox.className = "message";
+      messageBox.textContent = "";
+      loginButton.disabled = true;
+      loginButton.textContent = "Signing in...";
+
+      const formData = new FormData(form);
+
+      try {
+        const response = await fetch("backend/auth/login.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status === "success") {
+          sessionStorage.setItem("userID", result.userID || "");
+          sessionStorage.setItem("username", result.username || "");
+          sessionStorage.setItem("role", result.role || "");
+          sessionStorage.setItem("providerID", result.providerID || "");
+          sessionStorage.setItem("medAssistantID", result.medAssistantID || "");
+          sessionStorage.setItem("patientID", result.patientID || "");
+
+          messageBox.className = "message success";
+          messageBox.textContent = "Login successful. Routing to your portal...";
+
+          setTimeout(() => {
+            if (result.role === "provider") {
+              window.location.href = "provider/index.html";
+            } else if (result.role === "medAssistant") {
+              window.location.href = "med-assistant/index.html";
+            } else if (result.role === "patient") {
+              window.location.href = "patient/index.html";
+            } else {
+              messageBox.className = "message error";
+              messageBox.textContent = "Login worked, but the account role is not recognized.";
+            }
+          }, 700);
+        } else {
+          messageBox.className = "message error";
+          messageBox.textContent = result.message || "Invalid username or password.";
+        }
+      } catch (error) {
+        messageBox.className = "message error";
+        messageBox.textContent = "Unable to connect to the login service. Check the backend path and server setup.";
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>
