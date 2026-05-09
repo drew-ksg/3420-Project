@@ -5,6 +5,15 @@ header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once("../dbConnection.php");
+$conn = connect();
+
+if ($conn === NULL) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Database connection failed"
+    ]);
+    exit;
+}
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     echo json_encode([

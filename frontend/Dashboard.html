@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADA Clinic Appointments</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #90EE90;
+      color: #1f2d1f;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-header {
+      background: #ffffff;
+      border-bottom: 1px solid #cfe4cf;
+      padding: 20px 32px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .clinic-title {
+      color: #0f570f;
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab {
+      border: 1px solid #b7d7b7;
+      border-bottom: none;
+      background: #eef9ee;
+      color: #0f570f;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    .tab.active {
+      background: #0f570f;
+      color: #ffffff;
+    }
+
+    .page-content {
+      padding: 26px 32px 34px;
+      flex: 1;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+      overflow: hidden;
+      max-width: 1250px;
+      margin: 0 auto;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dbe8db;
+      background: #f7fcf7;
+    }
+
+    .panel-header h1 {
+      color: #0f570f;
+      font-size: 22px;
+    }
+
+    .provider-meta {
+      color: #526052;
+      font-size: 14px;
+    }
+
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .schedule-table th {
+      text-align: left;
+      background: #0f570f;
+      color: #ffffff;
+      padding: 13px 14px;
+      font-size: 14px;
+      position: sticky;
+      top: 106px;
+      z-index: 5;
+    }
+
+    .schedule-table td {
+      border-bottom: 1px solid #e2ebe2;
+      padding: 12px 14px;
+      vertical-align: top;
+    }
+
+    .time-cell {
+      width: 115px;
+      color: #0f570f;
+      font-weight: 700;
+      background: #f8fcf8;
+      white-space: nowrap;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .appointment-cell {
+      min-height: 54px;
+    }
+
+    .actions-cell {
+      width: 365px;
+      text-align: right;
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    .blank-text {
+      color: #9aa59a;
+      font-style: italic;
+      padding-top: 7px;
+    }
+
+    .appointment-card {
+      padding: 10px 0;
+      border-bottom: 1px solid #edf4ed;
+    }
+
+    .appointment-card:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .patient-name {
+      color: #142414;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .patient-details {
+      color: #566356;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .inline-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf4ed;
+    }
+
+    .inline-actions:last-child {
+      border-bottom: none;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary,
+    .btn-small {
+      background: #0f570f;
+      color: #ffffff;
+    }
+
+    .btn-primary {
+      padding: 12px 18px;
+      font-size: 14px;
+    }
+
+    .btn-small {
+      min-width: 38px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .btn-secondary {
+      background: #dff4df;
+      color: #0f570f;
+      border: 1px solid #a9d2a9;
+      padding: 12px 18px;
+      font-size: 14px;
+    }
+
+    .btn-muted {
+      background: #eef5ee;
+      color: #0f570f;
+      border: 1px solid #c7ddc7;
+      min-width: 38px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .btn-danger {
+      background: #8f1d1d;
+      color: #ffffff;
+      min-width: 38px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .btn-disabled {
+      background: #eef5ee;
+      color: #9aa59a;
+      border: 1px solid #d7e4d7;
+      min-width: 82px;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+
+    .btn-time {
+      background: #f1f8f1;
+      color: #0f570f;
+      border: 1px solid #c8dfc8;
+      min-width: 82px;
+      padding: 8px 10px;
+      font-size: 13px;
+      cursor: default;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.42);
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 24px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 620px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dfeade;
+      background: #f7fcf7;
+    }
+
+    .modal-header h2 {
+      color: #0f570f;
+      font-size: 21px;
+    }
+
+    .close-btn {
+      background: transparent;
+      color: #425242;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 22px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #263326;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #c9d6c9;
+      border-radius: 5px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 78px;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #0f570f;
+      box-shadow: 0 0 0 3px rgba(15, 87, 15, 0.14);
+    }
+
+    .search-results {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      background: #ffffff;
+      border: 1px solid #bfd6bf;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+      z-index: 80;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .search-results.show {
+      display: block;
+    }
+
+    .search-result-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #edf3ed;
+      font-size: 14px;
+    }
+
+    .search-result-item:hover {
+      background: #eef9ee;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 18px 22px;
+      border-top: 1px solid #dfeade;
+      background: #fbfefb;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 11px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      color: #8f1d1d;
+      background: #fdecec;
+      border: 1px solid #e4bbbb;
+    }
+
+    .message.success {
+      color: #0f570f;
+      background: #e8f7e8;
+      border: 1px solid #b7dfb7;
+    }
+
+    @media (max-width: 900px) {
+      .schedule-table th:nth-child(3),
+      .schedule-table td:nth-child(3) {
+        width: auto;
+      }
+
+      .appointment-card {
+        grid-template-columns: 1fr;
+      }
+
+      .inline-actions,
+      .actions-cell {
+        text-align: left;
+        justify-content: flex-start;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <div class="clinic-title">ADA Clinic</div>
+      <nav class="tabs" aria-label="Provider portal navigation">
+        <button class="tab active" type="button">Appointments</button>
+        <button class="tab" type="button">Patient Chart</button>
+      </nav>
+    </header>
+
+    <main class="page-content">
+      <section class="panel">
+        <div class="panel-header">
+          <h1>Provider Appointments</h1>
+          <div class="provider-meta" id="providerMeta">Provider view</div>
+        </div>
+
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Scheduled Patient(s)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="scheduleModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scheduleModalTitle">
+      <div class="modal-header">
+        <h2 id="scheduleModalTitle">Schedule Patient</h2>
+        <button class="close-btn" type="button" onclick="closeScheduleModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="scheduleFirstName">First Name</label>
+            <input id="scheduleFirstName" type="text" autocomplete="off" oninput="searchPatients()" />
+            <div class="search-results" id="patientSearchResults"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="scheduleLastName">Last Name</label>
+            <input id="scheduleLastName" type="text" autocomplete="off" oninput="searchPatients()" />
+          </div>
+
+          <div class="form-group">
+            <label for="schedulePatientID">Patient ID</label>
+            <input id="schedulePatientID" type="text" autocomplete="off" oninput="searchPatients()" />
+          </div>
+
+          <div class="form-group">
+            <label for="scheduleDOB">Date of Birth</label>
+            <input id="scheduleDOB" type="date" oninput="searchPatients()" />
+          </div>
+
+          <div class="form-group full">
+            <label for="scheduleReason">Reason for Visit</label>
+            <textarea id="scheduleReason"></textarea>
+          </div>
+        </div>
+
+        <div id="scheduleMessage" class="message"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" type="button" onclick="openNewPatientForm()">New Patient</button>
+        <button class="btn-primary" type="button" onclick="schedulePatient()">Schedule Patient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="newPatientModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="newPatientModalTitle">
+      <div class="modal-header">
+        <h2 id="newPatientModalTitle">Add New Patient</h2>
+        <button class="close-btn" type="button" onclick="closeNewPatientForm()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="newFirstName">First Name</label>
+            <input id="newFirstName" type="text" />
+          </div>
+
+          <div class="form-group">
+            <label for="newLastName">Last Name</label>
+            <input id="newLastName" type="text" />
+          </div>
+
+          <div class="form-group">
+            <label for="newDOB">Date of Birth</label>
+            <input id="newDOB" type="date" />
+          </div>
+
+          <div class="form-group">
+            <label for="newGender">Gender</label>
+            <input id="newGender" type="text" />
+          </div>
+
+          <div class="form-group">
+            <label for="newEmail">Email</label>
+            <input id="newEmail" type="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="newPhone">Phone</label>
+            <input id="newPhone" type="tel" />
+          </div>
+
+          <div class="form-group full">
+            <label for="newAddress">Address</label>
+            <input id="newAddress" type="text" />
+          </div>
+
+          <div class="form-group">
+            <label for="newInsuranceName">Insurance Name</label>
+            <input id="newInsuranceName" type="text" />
+          </div>
+
+          <div class="form-group">
+            <label for="newInsuranceID">Insurance ID</label>
+            <input id="newInsuranceID" type="text" />
+          </div>
+
+          <div class="form-group full">
+            <label for="newAllergies">Allergies</label>
+            <textarea id="newAllergies"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label for="newMedications">Medications</label>
+            <textarea id="newMedications"></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label for="newMedicalHistory">Medical History</label>
+            <textarea id="newMedicalHistory"></textarea>
+          </div>
+        </div>
+
+        <div id="newPatientMessage" class="message"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-secondary" type="button" onclick="closeNewPatientForm()">Cancel</button>
+        <button class="btn-primary" type="button" onclick="addNewPatient()">Add Patient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="deleteModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle" style="max-width: 430px;">
+    <div class="modal-header">
+      <h2 id="deleteModalTitle">Remove Appointment</h2>
+      <button class="close-btn" type="button" onclick="closeDeleteModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="line-height: 1.5; color: #334033;">
+        Remove this patient from the schedule?
+      </p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" type="button" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-danger" type="button" onclick="confirmDeleteAppointment()">Remove</button>
+    </div>
+  </div>
+</div>
+
+  <script>
+    //const role = sessionStorage.getItem("role");
+    //const username = sessionStorage.getItem("username");
+    //const providerMeta = document.getElementById("providerMeta");
+    //providerMeta.textContent = `Signed in as ${username} (${role})`;
+    const scheduleBody = document.getElementById("scheduleBody");
+    const scheduleModalBackdrop = document.getElementById("scheduleModalBackdrop");
+    const newPatientModalBackdrop = document.getElementById("newPatientModalBackdrop");
+    const patientSearchResults = document.getElementById("patientSearchResults");
+    const providerMeta = document.getElementById("providerMeta");
+
+    let activeTimeSlot = null;
+    let editingAppointmentID = null;
+    let pendingDeleteTime = null;
+    let pendingDeleteAppointmentID = null;
+    let nextAppointmentID = 1;
+    let nextPatientID = 100;
+
+    const providerID = sessionStorage.getItem("providerID") || "1";
+    const providerUsername = sessionStorage.getItem("username") || "Provider";
+    providerMeta.textContent = `Signed in as ${providerUsername} | Provider ID: ${providerID}`;
+
+    const schedule = {};
+
+    // Temporary in-browser mock patients. Replace with backend patient search later.
+    const patients = [
+      { patientID: "1", firstName: "John", lastName: "Doe", dob: "1990-01-01", email: "johndoe@email.com", phone: "661-555-1001" },
+      { patientID: "2", firstName: "Jane", lastName: "Smith", dob: "1985-05-12", email: "janesmith@email.com", phone: "661-555-1002" },
+      { patientID: "3", firstName: "Michael", lastName: "Brown", dob: "1989-05-22", email: "mbrown@email.com", phone: "661-555-1003" },
+      { patientID: "4", firstName: "Maria", lastName: "Lopez", dob: "1989-05-22", email: "mlopez@email.com", phone: "661-555-1004" }
+    ];
+
+    function formatTime(hour, minute) {
+      const suffix = hour >= 12 ? "PM" : "AM";
+      let displayHour = hour % 12;
+      if (displayHour === 0) displayHour = 12;
+      return `${displayHour}:${String(minute).padStart(2, "0")} ${suffix}`;
+    }
+
+    function buildTimeSlots() {
+      let current = new Date();
+      current.setHours(7, 45, 0, 0);
+
+      const end = new Date();
+      end.setHours(17, 0, 0, 0);
+
+      while (current <= end) {
+        const time = formatTime(current.getHours(), current.getMinutes());
+        schedule[time] = [];
+        current.setMinutes(current.getMinutes() + 15);
+      }
+    }
+
+    function renderSchedule() {
+      scheduleBody.innerHTML = "";
+
+      Object.keys(schedule).forEach(time => {
+        const row = document.createElement("tr");
+        const appointments = schedule[time];
+
+        const timeCell = document.createElement("td");
+        timeCell.className = "time-cell";
+        timeCell.textContent = time;
+
+        const appointmentCell = document.createElement("td");
+        appointmentCell.className = "appointment-cell";
+
+        const actionsCell = document.createElement("td");
+        actionsCell.className = "actions-cell";
+
+        if (appointments.length === 0) {
+          appointmentCell.innerHTML = '<div class="blank-text">No patient scheduled</div>';
+          actionsCell.innerHTML = `<button class="btn-small" type="button" onclick="openScheduleModal('${time}')">+</button>`;
+        } else {
+          appointments.forEach(appt => {
+            const card = document.createElement("div");
+            card.className = "appointment-card";
+
+            const info = document.createElement("div");
+            info.innerHTML = `
+              <div class="patient-name">${appt.firstName} ${appt.lastName}</div>
+              <div class="patient-details">DOB: ${formatDOB(appt.dob)} | Reason: ${appt.reasonForVisit || "Not listed"}</div>
+            `;
+
+            const actions = document.createElement("div");
+            actions.className = "inline-actions";
+            actions.innerHTML = `
+              <button class="btn-small" type="button" title="Add another patient" onclick="openScheduleModal('${time}')">+</button>
+              <button class="btn-muted" type="button" onclick="openScheduleModal('${time}', ${appt.appointmentID})">Edit</button>
+              ${appt.checkInTime ? `<button class="btn-time" type="button">${appt.checkInTime}</button>` : `<button class="btn-muted" type="button" onclick="checkInPatient('${time}', ${appt.appointmentID})">Check In</button>`}
+              ${appt.checkOutTime 
+                ? `<button class="btn-time" type="button">${appt.checkOutTime}</button>` 
+                : appt.checkInTime 
+                  ? `<button class="btn-muted" type="button" onclick="checkOutPatient('${time}', ${appt.appointmentID})">Check Out</button>` 
+                  : `<button class="btn-disabled" type="button" disabled>Check Out</button>`
+              }
+              <button class="btn-danger" type="button" onclick="openDeleteModal('${time}', ${appt.appointmentID})">X</button>
+            `;
+
+            card.appendChild(info);
+            appointmentCell.appendChild(card);
+            actionsCell.appendChild(actions);
+          });
+        }
+
+        row.appendChild(timeCell);
+        row.appendChild(appointmentCell);
+        row.appendChild(actionsCell);
+        scheduleBody.appendChild(row);
+      });
+    }
+
+    function openScheduleModal(time, appointmentID = null) {
+      activeTimeSlot = time;
+      editingAppointmentID = appointmentID;
+      clearScheduleMessage();
+      patientSearchResults.className = "search-results";
+      patientSearchResults.innerHTML = "";
+
+      document.getElementById("scheduleModalTitle").textContent = appointmentID ? `Edit ${time} Appointment` : `Schedule Patient at ${time}`;
+      clearScheduleForm();
+
+      if (appointmentID) {
+        const appt = schedule[time].find(item => item.appointmentID === appointmentID);
+        if (appt) fillScheduleForm(appt);
+      }
+
+      scheduleModalBackdrop.classList.add("show");
+    }
+
+    function closeScheduleModal() {
+      scheduleModalBackdrop.classList.remove("show");
+      activeTimeSlot = null;
+      editingAppointmentID = null;
+      clearScheduleForm();
+    }
+
+    function clearScheduleForm() {
+      document.getElementById("scheduleFirstName").value = "";
+      document.getElementById("scheduleLastName").value = "";
+      document.getElementById("schedulePatientID").value = "";
+      document.getElementById("scheduleDOB").value = "";
+      document.getElementById("scheduleReason").value = "";
+    }
+
+    function fillScheduleForm(patientOrAppointment) {
+      document.getElementById("scheduleFirstName").value = patientOrAppointment.firstName || "";
+      document.getElementById("scheduleLastName").value = patientOrAppointment.lastName || "";
+      document.getElementById("schedulePatientID").value = patientOrAppointment.patientID || "";
+      document.getElementById("scheduleDOB").value = patientOrAppointment.dob || "";
+      document.getElementById("scheduleReason").value = patientOrAppointment.reasonForVisit || "";
+    }
+
+    function searchPatients() {
+      const firstName = document.getElementById("scheduleFirstName").value.trim().toLowerCase();
+      const lastName = document.getElementById("scheduleLastName").value.trim().toLowerCase();
+      const patientID = document.getElementById("schedulePatientID").value.trim().toLowerCase();
+      const dob = document.getElementById("scheduleDOB").value.trim();
+
+      if (!firstName && !lastName && !patientID && !dob) {
+        patientSearchResults.className = "search-results";
+        patientSearchResults.innerHTML = "";
+        return;
+      }
+
+      const matches = patients.filter(patient => {
+        return (
+          (firstName && patient.firstName.toLowerCase().includes(firstName)) ||
+          (lastName && patient.lastName.toLowerCase().includes(lastName)) ||
+          (patientID && String(patient.patientID).toLowerCase().includes(patientID)) ||
+          (dob && patient.dob === dob)
+        );
+      });
+
+      if (matches.length === 0) {
+        patientSearchResults.className = "search-results show";
+        patientSearchResults.innerHTML = '<div class="search-result-item">No matching patients found</div>';
+        return;
+      }
+
+      patientSearchResults.className = "search-results show";
+      patientSearchResults.innerHTML = matches.map(patient => `
+        <div class="search-result-item" onclick='selectPatient(${JSON.stringify(patient)})'>
+          ${patient.firstName} ${patient.lastName} | ID: ${patient.patientID} | DOB: ${formatDOB(patient.dob)}
+        </div>
+      `).join("");
+    }
+
+    function selectPatient(patient) {
+      const existingReason = document.getElementById("scheduleReason").value;
+      fillScheduleForm({ ...patient, reasonForVisit: existingReason });
+      patientSearchResults.className = "search-results";
+      patientSearchResults.innerHTML = "";
+    }
+
+    async function schedulePatient() {
+      const patientID = document.getElementById("schedulePatientID").value.trim();
+      const firstName = document.getElementById("scheduleFirstName").value.trim();
+      const lastName = document.getElementById("scheduleLastName").value.trim();
+      const dob = document.getElementById("scheduleDOB").value;
+      const reasonForVisit = document.getElementById("scheduleReason").value.trim();
+
+      if (!patientID || !firstName || !lastName || !dob || !reasonForVisit) {
+        showScheduleMessage("Please complete patient information and reason for visit.", "error");
+        return;
+      }
+
+      const appointment = {
+        appointmentID: editingAppointmentID || nextAppointmentID++,
+        patientID,
+        firstName,
+        lastName,
+        dob,
+        reasonForVisit,
+        checkInTime: editingAppointmentID ? getExistingAppointmentValue("checkInTime") : null,
+        checkOutTime: editingAppointmentID ? getExistingAppointmentValue("checkOutTime") : null
+      };
+
+      if (editingAppointmentID) {
+        const index = schedule[activeTimeSlot].findIndex(item => item.appointmentID === editingAppointmentID);
+        schedule[activeTimeSlot][index] = appointment;
+      } else {
+        schedule[activeTimeSlot].push(appointment);
+      }
+
+      // TODO: Replace local schedule update with backend call to create/update appointment.
+      // Example target: ../backend/appointment/createApp.php or updateApp.php
+
+      renderSchedule();
+      closeScheduleModal();
+    }
+
+    function getExistingAppointmentValue(key) {
+      const appt = schedule[activeTimeSlot].find(item => item.appointmentID === editingAppointmentID);
+      return appt ? appt[key] : null;
+    }
+
+    function checkInPatient(time, appointmentID) {
+      const appt = schedule[time].find(item => item.appointmentID === appointmentID);
+      if (appt) {
+        appt.checkInTime = currentClockTime();
+        // TODO: Save check-in time to database once a backend endpoint exists.
+        renderSchedule();
+      }
+    }
+
+    function checkOutPatient(time, appointmentID) {
+      const appt = schedule[time].find(item => item.appointmentID === appointmentID);
+      if (appt) {
+        appt.checkOutTime = currentClockTime();
+        // TODO: Save check-out time to database once a backend endpoint exists.
+        renderSchedule();
+      }
+    }
+
+    // TODO: Save deletion to database using backend/appointment/deleteApp.php.
+    function openDeleteModal(time, appointmentID) {
+      pendingDeleteTime = time;
+      pendingDeleteAppointmentID = appointmentID;
+      document.getElementById("deleteModalBackdrop").classList.add("show");
+    }
+
+    function closeDeleteModal() {
+      pendingDeleteTime = null;
+      pendingDeleteAppointmentID = null;
+      document.getElementById("deleteModalBackdrop").classList.remove("show");
+    }
+
+    function confirmDeleteAppointment() {
+      if (pendingDeleteTime === null || pendingDeleteAppointmentID === null) return;
+
+      schedule[pendingDeleteTime] = schedule[pendingDeleteTime].filter(
+        item => item.appointmentID !== pendingDeleteAppointmentID
+      );
+
+      renderSchedule();
+      closeDeleteModal();
+    }
+
+    function openNewPatientForm() {
+      const firstName = document.getElementById("scheduleFirstName").value;
+      const lastName = document.getElementById("scheduleLastName").value;
+      const dob = document.getElementById("scheduleDOB").value;
+
+      document.getElementById("newFirstName").value = firstName;
+      document.getElementById("newLastName").value = lastName;
+      document.getElementById("newDOB").value = dob;
+      clearNewPatientMessage();
+      newPatientModalBackdrop.classList.add("show");
+    }
+
+    function closeNewPatientForm() {
+      newPatientModalBackdrop.classList.remove("show");
+    }
+
+    async function addNewPatient() {
+      const newPatient = {
+        patientID: String(nextPatientID++),
+        firstName: document.getElementById("newFirstName").value.trim(),
+        lastName: document.getElementById("newLastName").value.trim(),
+        dob: document.getElementById("newDOB").value,
+        gender: document.getElementById("newGender").value.trim(),
+        email: document.getElementById("newEmail").value.trim(),
+        phone: document.getElementById("newPhone").value.trim(),
+        address: document.getElementById("newAddress").value.trim(),
+        insuranceProvider: document.getElementById("newInsuranceName").value.trim(),
+        insuranceID: document.getElementById("newInsuranceID").value.trim(),
+        allergies: document.getElementById("newAllergies").value.trim(),
+        medications: document.getElementById("newMedications").value.trim(),
+        medicalHistory: document.getElementById("newMedicalHistory").value.trim()
+      };
+
+      if (!newPatient.firstName || !newPatient.lastName || !newPatient.dob || !newPatient.insuranceProvider || !newPatient.insuranceID) {
+        showNewPatientMessage("Please enter first name, last name, DOB, insurance name, and insurance ID.", "error");
+        return;
+      }
+
+      // TODO: Replace this mock insertion with POST to ../backend/patient/create.php.
+      // The backend should return the newly created patientID, then that ID should be used below.
+      patients.push(newPatient);
+
+      fillScheduleForm({
+        patientID: newPatient.patientID,
+        firstName: newPatient.firstName,
+        lastName: newPatient.lastName,
+        dob: newPatient.dob,
+        reasonForVisit: ""
+      });
+
+      showScheduleMessage("New patient added. Enter the reason for visit, then schedule the patient.", "success");
+      closeNewPatientForm();
+      clearNewPatientForm();
+    }
+
+    function clearNewPatientForm() {
+      [
+        "newFirstName", "newLastName", "newDOB", "newGender", "newEmail", "newPhone",
+        "newAddress", "newInsuranceName", "newInsuranceID", "newAllergies",
+        "newMedications", "newMedicalHistory"
+      ].forEach(id => document.getElementById(id).value = "");
+    }
+
+    function currentClockTime() {
+      const now = new Date();
+      let hours = now.getHours();
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const suffix = hours >= 12 ? "PM" : "AM";
+      hours = hours % 12 || 12;
+      return `${hours}:${minutes} ${suffix}`;
+    }
+
+    function formatDOB(dob) {
+      if (!dob) return "";
+      const parts = dob.split("-");
+      if (parts.length !== 3) return dob;
+      return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    }
+
+    function showScheduleMessage(text, type) {
+      const box = document.getElementById("scheduleMessage");
+      box.textContent = text;
+      box.className = `message show ${type}`;
+    }
+
+    function clearScheduleMessage() {
+      const box = document.getElementById("scheduleMessage");
+      box.textContent = "";
+      box.className = "message";
+    }
+
+    function showNewPatientMessage(text, type) {
+      const box = document.getElementById("newPatientMessage");
+      box.textContent = text;
+      box.className = `message show ${type}`;
+    }
+
+    function clearNewPatientMessage() {
+      const box = document.getElementById("newPatientMessage");
+      box.textContent = "";
+      box.className = "message";
+    }
+
+    buildTimeSlots();
+    renderSchedule();
+  </script>
+</body>
+</html>
+

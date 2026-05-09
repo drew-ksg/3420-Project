@@ -264,7 +264,7 @@
       const formData = new FormData(form);
 
       try {
-        const response = await fetch("backend/auth/login.php", {
+        const response = await fetch("../backend/auth/login.php", {
           method: "POST",
           body: formData
         });
@@ -284,7 +284,7 @@
 
           setTimeout(() => {
             if (result.role === "provider") {
-              window.location.href = "provider/index.html";
+              window.location.href = "Dashboard.html";
             } else if (result.role === "medAssistant") {
               window.location.href = "med-assistant/index.html";
             } else if (result.role === "patient") {
