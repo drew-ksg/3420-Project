@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADA Clinic Patient Chart</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #90EE90;
+      color: #1f2d1f;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-header {
+      background: #ffffff;
+      border-bottom: 1px solid #cfe4cf;
+      padding: 20px 32px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .clinic-title {
+      color: #0f570f;
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab {
+      border: 1px solid #b7d7b7;
+      border-bottom: none;
+      background: #eef9ee;
+      color: #0f570f;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 15px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .tab.active {
+      background: #0f570f;
+      color: #ffffff;
+    }
+
+    .page-content {
+      padding: 26px 32px 34px;
+      flex: 1;
+    }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+      overflow: hidden;
+      max-width: 1250px;
+      margin: 0 auto;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dbe8db;
+      background: #f7fcf7;
+    }
+
+    .panel-header h1 {
+      color: #0f570f;
+      font-size: 22px;
+    }
+
+    .provider-meta {
+      color: #526052;
+      font-size: 14px;
+    }
+
+    .patient-search-area {
+      padding: 28px 24px;
+      border-bottom: 1px solid #dbe8db;
+      background: #fbfefb;
+    }
+
+    .search-title {
+      color: #0f570f;
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+
+    .search-help {
+      color: #526052;
+      font-size: 14px;
+      margin-bottom: 18px;
+    }
+
+    .search-box-wrap {
+      position: relative;
+      max-width: 680px;
+    }
+
+    .patient-search-input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #c9d6c9;
+      border-radius: 5px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .patient-search-input:focus {
+      border-color: #0f570f;
+      box-shadow: 0 0 0 3px rgba(15, 87, 15, 0.14);
+    }
+
+    .search-results {
+      display: none;
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 100%;
+      background: #ffffff;
+      border: 1px solid #bfd6bf;
+      border-radius: 5px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+      z-index: 80;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .search-results.show {
+      display: block;
+    }
+
+    .search-result-item {
+      padding: 11px 13px;
+      cursor: pointer;
+      border-bottom: 1px solid #edf3ed;
+      font-size: 14px;
+    }
+
+    .search-result-item:hover {
+      background: #eef9ee;
+    }
+
+    .subnav {
+      display: none;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dbe8db;
+      background: #f7fcf7;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .subnav.show {
+      display: flex;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.1s, opacity 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #0f570f;
+      color: #ffffff;
+      padding: 12px 18px;
+      font-size: 14px;
+    }
+
+    .btn-secondary {
+      background: #dff4df;
+      color: #0f570f;
+      border: 1px solid #a9d2a9;
+      padding: 12px 18px;
+      font-size: 14px;
+    }
+
+    .btn-muted {
+      background: #eef5ee;
+      color: #0f570f;
+      border: 1px solid #c7ddc7;
+      padding: 8px 11px;
+      font-size: 13px;
+    }
+
+    .btn-disabled {
+      background: #eef5ee;
+      color: #9aa59a;
+      border: 1px solid #d7e4d7;
+      padding: 12px 18px;
+      font-size: 14px;
+      cursor: not-allowed;
+      opacity: 0.85;
+    }
+
+    .chart-content {
+      display: none;
+      padding: 22px;
+    }
+
+    .chart-content.show {
+      display: block;
+    }
+
+    .selected-patient-banner {
+      display: none;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dbe8db;
+      background: #ffffff;
+    }
+
+    .selected-patient-banner.show {
+      display: block;
+    }
+
+    .selected-patient-name {
+      color: #0f570f;
+      font-size: 21px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .selected-patient-details {
+      color: #526052;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .info-card {
+      border: 1px solid #dbe8db;
+      border-radius: 8px;
+      background: #ffffff;
+      overflow: hidden;
+      min-height: 210px;
+    }
+
+    .info-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    .info-card-header {
+      padding: 13px 15px;
+      background: #0f570f;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .info-card-body {
+      padding: 12px 15px;
+    }
+
+    .data-row {
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #edf3ed;
+      font-size: 14px;
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .data-row.two-col {
+      grid-template-columns: 135px 1fr;
+    }
+
+    .data-label {
+      color: #0f570f;
+      font-weight: 700;
+    }
+
+    .data-text {
+      color: #334033;
+      line-height: 1.45;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 6px;
+      justify-content: flex-end;
+    }
+
+    .empty-state {
+      color: #8c998c;
+      font-style: italic;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    .demographics-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 900px;
+    }
+
+    .form-group {
+      margin-bottom: 4px;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #263326;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #c9d6c9;
+      border-radius: 5px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #0f570f;
+      box-shadow: 0 0 0 3px rgba(15, 87, 15, 0.14);
+    }
+
+    .form-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .document-search {
+      max-width: 680px;
+      margin-bottom: 18px;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 11px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      color: #8f1d1d;
+      background: #fdecec;
+      border: 1px solid #e4bbbb;
+    }
+
+    .message.success {
+      color: #0f570f;
+      background: #e8f7e8;
+      border: 1px solid #b7dfb7;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.42);
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      padding: 24px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid #dfeade;
+      background: #f7fcf7;
+    }
+
+    .modal-header h2 {
+      color: #0f570f;
+      font-size: 21px;
+    }
+
+    .close-btn {
+      background: transparent;
+      color: #425242;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 22px;
+      line-height: 1.55;
+    }
+
+    .note-section {
+      margin-bottom: 18px;
+    }
+
+    .note-section h3 {
+      color: #0f570f;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 900px) {
+      .info-grid,
+      .demographics-form {
+        grid-template-columns: 1fr;
+      }
+
+      .info-card.wide,
+      .form-group.full,
+      .form-actions {
+        grid-column: auto;
+      }
+
+      .data-row {
+        grid-template-columns: 1fr;
+      }
+
+      .row-actions {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="top-header">
+      <div class="clinic-title">ADA Clinic</div>
+      <nav class="tabs" aria-label="Provider portal navigation">
+        <a class="tab" href="Dashboard.html">Appointments</a>
+        <button class="tab active" type="button">Patient Chart</button>
+      </nav>
+    </header>
+
+    <main class="page-content">
+      <section class="panel">
+        <div class="panel-header">
+          <h1>Patient Chart</h1>
+          <div class="provider-meta" id="providerMeta">Provider view</div>
+        </div>
+
+        <section class="patient-search-area" id="patientSearchArea">
+          <h2 class="search-title">Search Patient</h2>
+          <p class="search-help">Search by first name, last name, patient ID, or date of birth.</p>
+          <div class="search-box-wrap">
+            <input class="patient-search-input" id="patientSearchInput" type="text" placeholder="Search patient..." autocomplete="off" oninput="searchPatientsForChart()" />
+            <div class="search-results" id="patientSearchResults"></div>
+          </div>
+          <div id="searchMessage" class="message"></div>
+        </section>
+
+        <section class="selected-patient-banner" id="selectedPatientBanner">
+          <div class="selected-patient-name" id="selectedPatientName"></div>
+          <div class="selected-patient-details" id="selectedPatientDetails"></div>
+        </section>
+
+        <nav class="subnav" id="chartSubnav" aria-label="Patient chart sections">
+          <button class="btn-secondary" type="button" onclick="showSection('demographics')">Demographics</button>
+          <button class="btn-primary" id="middleChartButton" type="button" onclick="handleMiddleChartButton()">Create Note</button>
+          <button class="btn-secondary" type="button" onclick="showSection('documents')">Documents</button>
+        </nav>
+
+        <section class="chart-content show" id="emptyChartState">
+          <div class="empty-state">Select a patient to view chart information.</div>
+        </section>
+
+        <section class="chart-content" id="chartsSection">
+          <div class="info-grid">
+            <article class="info-card">
+              <div class="info-card-header">Progress Notes</div>
+              <div class="info-card-body" id="progressNotesBox"></div>
+            </article>
+
+            <article class="info-card">
+              <div class="info-card-header">Medications</div>
+              <div class="info-card-body" id="medicationsBox"></div>
+            </article>
+
+            <article class="info-card">
+              <div class="info-card-header">Medical History</div>
+              <div class="info-card-body" id="medicalHistoryBox"></div>
+            </article>
+
+            <article class="info-card">
+              <div class="info-card-header">Previous Appointments</div>
+              <div class="info-card-body" id="previousAppointmentsBox"></div>
+            </article>
+
+            <article class="info-card wide">
+              <div class="info-card-header">HPIs</div>
+              <div class="info-card-body" id="hpiBox"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="chart-content" id="demographicsSection">
+          <form class="demographics-form" id="demographicsForm">
+            <div class="form-group">
+              <label for="demoFirstName">First Name</label>
+              <input id="demoFirstName" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoLastName">Last Name</label>
+              <input id="demoLastName" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoDOB">Date of Birth</label>
+              <input id="demoDOB" type="date" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoGender">Gender</label>
+              <input id="demoGender" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoEmail">Email</label>
+              <input id="demoEmail" type="email" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoPhone">Phone</label>
+              <input id="demoPhone" type="tel" />
+            </div>
+
+            <div class="form-group full">
+              <label for="demoAddress">Address</label>
+              <input id="demoAddress" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoEmergencyName">Emergency Contact Name</label>
+              <input id="demoEmergencyName" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoEmergencyPhone">Emergency Contact Phone</label>
+              <input id="demoEmergencyPhone" type="tel" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoInsuranceName">Insurance Name</label>
+              <input id="demoInsuranceName" type="text" />
+            </div>
+
+            <div class="form-group">
+              <label for="demoInsuranceID">Insurance ID</label>
+              <input id="demoInsuranceID" type="text" />
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-primary" type="button" onclick="saveDemographics()">Save Demographics</button>
+            </div>
+          </form>
+          <div id="demographicsMessage" class="message"></div>
+        </section>
+
+        <section class="chart-content" id="documentsSection">
+          <div class="document-search">
+            <input class="patient-search-input" id="documentSearchInput" type="text" placeholder="Search document type..." oninput="renderDocuments()" />
+          </div>
+          <div class="info-card">
+            <div class="info-card-header">Documents</div>
+            <div class="info-card-body" id="documentsBox"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="noteModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+      <div class="modal-header">
+        <h2 id="noteModalTitle">Progress Note</h2>
+        <button class="close-btn" type="button" onclick="closeNoteModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="noteModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const providerMeta = document.getElementById("providerMeta");
+    const role = sessionStorage.getItem("role") || "provider";
+    const username = sessionStorage.getItem("username") || "Provider";
+    providerMeta.textContent = `Signed in as ${username} (${role})`;
+
+    let selectedPatientID = null;
+    let selectedPatientData = null;
+    let currentSection = "charts";
+
+    async function searchPatientsForChart() {
+      const term = document.getElementById("patientSearchInput").value.trim();
+      const resultsBox = document.getElementById("patientSearchResults");
+
+      if (!term) {
+        resultsBox.className = "search-results";
+        resultsBox.innerHTML = "";
+        return;
+      }
+
+      try {
+        const response = await fetch(`../backend/patient/search.php?term=${encodeURIComponent(term)}`);
+        const matches = await response.json();
+
+        if (!Array.isArray(matches) || matches.length === 0) {
+          resultsBox.className = "search-results show";
+          resultsBox.innerHTML = '<div class="search-result-item">No matching patients found</div>';
+          return;
+        }
+
+        resultsBox.className = "search-results show";
+        resultsBox.innerHTML = matches.map(patient => `
+          <div class="search-result-item" onclick="selectPatientForChart('${patient.patientID}')">
+            ${patient.firstName} ${patient.lastName} | ID: ${patient.patientID} | DOB: ${formatDOB(patient.dob)}
+          </div>
+        `).join("");
+      } catch (error) {
+        showMessage("searchMessage", "Could not search patients. Check backend/patient/search.php.", "error");
+      }
+    }
+
+    async function selectPatientForChart(patientID) {
+      selectedPatientID = patientID;
+      document.getElementById("patientSearchResults").className = "search-results";
+      document.getElementById("patientSearchResults").innerHTML = "";
+      document.getElementById("patientSearchInput").value = "";
+
+      await loadPatientChart(patientID);
+    }
+
+    async function loadPatientChart(patientID) {
+      try {
+        const response = await fetch(`../backend/patient/chart.php?patientID=${encodeURIComponent(patientID)}`);
+        const data = await response.json();
+
+        if (data.status !== "success") {
+          showMessage("searchMessage", data.message || "Could not load patient chart.", "error");
+          return;
+        }
+
+        selectedPatientData = data;
+        renderSelectedPatient();
+        fillDemographicsForm();
+        renderCharts();
+        renderDocuments();
+        document.getElementById("chartSubnav").classList.add("show");
+        document.getElementById("selectedPatientBanner").classList.add("show");
+        showSection("charts");
+      } catch (error) {
+        showMessage("searchMessage", "Could not load patient chart. Check backend/patient/chart.php.", "error");
+      }
+    }
+
+    function renderSelectedPatient() {
+      const patient = selectedPatientData.patient;
+      document.getElementById("selectedPatientName").textContent = `${patient.firstName} ${patient.lastName}`;
+      document.getElementById("selectedPatientDetails").textContent = `Patient ID: ${patient.patientID} | DOB: ${formatDOB(patient.dob)} | Phone: ${patient.phone || "Not listed"} | Email: ${patient.email || "Not listed"}`;
+    }
+
+    function showSection(sectionName) {
+      currentSection = sectionName;
+      ["emptyChartState", "chartsSection", "demographicsSection", "documentsSection"].forEach(id => {
+        document.getElementById(id).classList.remove("show");
+      });
+
+      if (!selectedPatientData) {
+        document.getElementById("emptyChartState").classList.add("show");
+        return;
+      }
+
+      if (sectionName === "charts") {
+        document.getElementById("chartsSection").classList.add("show");
+        document.getElementById("middleChartButton").textContent = "Create Note";
+        document.getElementById("middleChartButton").className = "btn-primary";
+      } else if (sectionName === "demographics") {
+        document.getElementById("demographicsSection").classList.add("show");
+        document.getElementById("middleChartButton").textContent = "Charts";
+        document.getElementById("middleChartButton").className = "btn-primary";
+      } else if (sectionName === "documents") {
+        document.getElementById("documentsSection").classList.add("show");
+        document.getElementById("middleChartButton").textContent = "Charts";
+        document.getElementById("middleChartButton").className = "btn-primary";
+      }
+    }
+
+    function handleMiddleChartButton() {
+      if (currentSection === "charts") {
+        alert("Create Note will be built later.");
+      } else {
+        showSection("charts");
+      }
+    }
+
+    function renderCharts() {
+      renderProgressNotes();
+      renderMedicationRows();
+      renderMedicalHistoryRows();
+      renderPreviousAppointments();
+      renderHpis();
+    }
+
+    function renderProgressNotes() {
+      const box = document.getElementById("progressNotesBox");
+      const notes = selectedPatientData.notes || [];
+
+      if (notes.length === 0) {
+        box.innerHTML = '<div class="empty-state">No progress notes found.</div>';
+        return;
+      }
+
+      box.innerHTML = notes.map(note => `
+        <div class="data-row">
+          <div class="data-label">${formatDate(note.apptDate)}</div>
+          <div class="data-text">${note.chiefComplaint || note.reasonForVisit || "No chief complaint listed"}</div>
+          <div class="row-actions">
+            <button class="btn-muted" type="button" onclick="viewNote('${note.noteID}')">View</button>
+            <button class="btn-muted" type="button" onclick="editNote('${note.noteID}')">Edit</button>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderMedicationRows() {
+      const box = document.getElementById("medicationsBox");
+      const text = selectedPatientData.chart?.medications || "";
+      box.innerHTML = makeSimpleRows(text, "No medications listed.");
+    }
+
+    function renderMedicalHistoryRows() {
+      const box = document.getElementById("medicalHistoryBox");
+      const text = selectedPatientData.chart?.medicalHistory || "";
+      box.innerHTML = makeSimpleRows(text, "No medical history listed.");
+    }
+
+    function renderPreviousAppointments() {
+      const box = document.getElementById("previousAppointmentsBox");
+      const appointments = selectedPatientData.appointments || [];
+
+      if (appointments.length === 0) {
+        box.innerHTML = '<div class="empty-state">No previous appointments found.</div>';
+        return;
+      }
+
+      box.innerHTML = appointments.map(appt => `
+        <div class="data-row two-col">
+          <div class="data-label">${formatDate(appt.apptDate)}</div>
+          <div class="data-text">${appt.status || "Scheduled"} | ${appt.reasonForVisit || "No reason listed"}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderHpis() {
+      const box = document.getElementById("hpiBox");
+      const notes = selectedPatientData.notes || [];
+      const hpis = notes.filter(note => note.subjective);
+
+      if (hpis.length === 0) {
+        box.innerHTML = '<div class="empty-state">No HPI text found.</div>';
+        return;
+      }
+
+      box.innerHTML = hpis.map(note => `
+        <div class="data-row two-col">
+          <div class="data-label">${formatDate(note.apptDate)}</div>
+          <div class="data-text">${escapeHtml(note.subjective)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderDocuments() {
+      const box = document.getElementById("documentsBox");
+      if (!selectedPatientData) return;
+
+      const searchTerm = document.getElementById("documentSearchInput").value.trim().toLowerCase();
+      let documents = selectedPatientData.documents || [];
+
+      if (searchTerm) {
+        documents = documents.filter(doc => (doc.documentType || "").toLowerCase().includes(searchTerm));
+      }
+
+      if (documents.length === 0) {
+        box.innerHTML = '<div class="empty-state">No matching documents found.</div>';
+        return;
+      }
+
+      box.innerHTML = documents.map(doc => `
+        <div class="data-row two-col">
+          <div class="data-label">${doc.documentType || "Document"}</div>
+          <div class="data-text">${doc.filePath || "No file path"} ${doc.uploadedAt ? `| Uploaded: ${formatDate(doc.uploadedAt)}` : ""}</div>
+        </div>
+      `).join("");
+    }
+
+    function fillDemographicsForm() {
+      const patient = selectedPatientData.patient || {};
+      const chart = selectedPatientData.chart || {};
+      const insurance = selectedPatientData.insurance || {};
+
+      document.getElementById("demoFirstName").value = patient.firstName || "";
+      document.getElementById("demoLastName").value = patient.lastName || "";
+      document.getElementById("demoDOB").value = patient.dob || "";
+      document.getElementById("demoGender").value = patient.gender || "";
+      document.getElementById("demoEmail").value = patient.email || "";
+      document.getElementById("demoPhone").value = patient.phone || "";
+      document.getElementById("demoAddress").value = chart.address || "";
+      document.getElementById("demoEmergencyName").value = chart.emergencyContactName || "";
+      document.getElementById("demoEmergencyPhone").value = chart.emergencyContactPhone || "";
+      document.getElementById("demoInsuranceName").value = insurance.providerName || "";
+      document.getElementById("demoInsuranceID").value = insurance.idNumber || "";
+    }
+
+    async function saveDemographics() {
+      if (!selectedPatientID) return;
+
+      const formData = new FormData();
+      formData.append("patientID", selectedPatientID);
+      formData.append("firstName", document.getElementById("demoFirstName").value.trim());
+      formData.append("lastName", document.getElementById("demoLastName").value.trim());
+      formData.append("dob", document.getElementById("demoDOB").value);
+      formData.append("gender", document.getElementById("demoGender").value.trim());
+      formData.append("email", document.getElementById("demoEmail").value.trim());
+      formData.append("phone", document.getElementById("demoPhone").value.trim());
+      formData.append("address", document.getElementById("demoAddress").value.trim());
+      formData.append("emergencyContactName", document.getElementById("demoEmergencyName").value.trim());
+      formData.append("emergencyContactPhone", document.getElementById("demoEmergencyPhone").value.trim());
+      formData.append("insuranceProvider", document.getElementById("demoInsuranceName").value.trim());
+      formData.append("insuranceID", document.getElementById("demoInsuranceID").value.trim());
+
+      try {
+        const response = await fetch("../backend/patient/updateDemographics.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status !== "success") {
+          showMessage("demographicsMessage", result.message || "Could not save demographics.", "error");
+          return;
+        }
+
+        showMessage("demographicsMessage", "Demographics saved.", "success");
+        await loadPatientChart(selectedPatientID);
+        showSection("demographics");
+      } catch (error) {
+        showMessage("demographicsMessage", "Could not save demographics. Check backend/patient/updateDemographics.php.", "error");
+      }
+    }
+
+    function makeSimpleRows(text, emptyMessage) {
+      if (!text || text.trim() === "") {
+        return `<div class="empty-state">${emptyMessage}</div>`;
+      }
+
+      return text.split(/\n|,/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .map(item => `<div class="data-row two-col"><div class="data-label">Item</div><div class="data-text">${escapeHtml(item)}</div></div>`)
+        .join("");
+    }
+
+    function viewNote(noteID) {
+      const note = (selectedPatientData.notes || []).find(item => String(item.noteID) === String(noteID));
+      if (!note) return;
+
+      document.getElementById("noteModalTitle").textContent = `Progress Note - ${formatDate(note.apptDate)}`;
+      document.getElementById("noteModalBody").innerHTML = `
+        <div class="note-section"><h3>Chief Complaint</h3><p>${escapeHtml(note.chiefComplaint || note.reasonForVisit || "Not listed")}</p></div>
+        <div class="note-section"><h3>Subjective / HPI</h3><p>${escapeHtml(note.subjective || "Not listed")}</p></div>
+        <div class="note-section"><h3>Objective</h3><p>${escapeHtml(note.objective || "Not listed")}</p></div>
+        <div class="note-section"><h3>Assessment</h3><p>${escapeHtml(note.assessment || "Not listed")}</p></div>
+        <div class="note-section"><h3>Plan</h3><p>${escapeHtml(note.plan || "Not listed")}</p></div>
+      `;
+      document.getElementById("noteModalBackdrop").classList.add("show");
+    }
+
+    function editNote(noteID) {
+      alert("Editing progress notes will be built later.");
+    }
+
+    function closeNoteModal() {
+      document.getElementById("noteModalBackdrop").classList.remove("show");
+    }
+
+    function showMessage(id, text, type) {
+      const box = document.getElementById(id);
+      box.textContent = text;
+      box.className = `message show ${type}`;
+    }
+
+    function formatDOB(dob) {
+      if (!dob) return "";
+      const parts = dob.split("-");
+      if (parts.length !== 3) return dob;
+      return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    }
+
+    function formatDate(dateTime) {
+      if (!dateTime) return "";
+      const date = new Date(String(dateTime).replace(" ", "T"));
+      if (Number.isNaN(date.getTime())) return dateTime;
+      return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>
+
