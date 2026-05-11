@@ -1,5 +1,4 @@
 <?php
-#Creates a new appointment in the database. There is no procudure or trigger for this so we just insert the data directly into the table
 require("../dbConnection.php");
 
 $conn = connect();
