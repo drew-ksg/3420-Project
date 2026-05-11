@@ -351,7 +351,8 @@
     }
 
     input,
-    textarea {
+    textarea,
+    select {
       width: 100%;
       padding: 11px 12px;
       border: 1px solid #c9d6c9;
@@ -366,7 +367,8 @@
     }
 
     input:focus,
-    textarea:focus {
+    textarea:focus 
+    select:focus {
       border-color: #0f570f;
       box-shadow: 0 0 0 3px rgba(15, 87, 15, 0.14);
     }
@@ -521,6 +523,12 @@
         <section class="selected-patient-banner" id="selectedPatientBanner">
           <div class="selected-patient-name" id="selectedPatientName"></div>
           <div class="selected-patient-details" id="selectedPatientDetails"></div>
+          <div style="margin-top: 12px;">
+            <button class="btn-primary" id="createPatientAccountButton" type="button" onclick="createPatientAccount()" style="display: none;">
+              Create Patient Account
+            </button>
+            <div id="accountMessage" class="message"></div>
+          </div>
         </section>
 
         <nav class="subnav" id="chartSubnav" aria-label="Patient chart sections">
@@ -649,6 +657,51 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="createNoteModalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="createNoteModalTitle">
+    <div class="modal-header">
+      <h2 id="createNoteModalTitle">Create Progress Note</h2>
+      <button class="close-btn" type="button" onclick="closeCreateNoteModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group full">
+        <label for="noteAppointment">Appointment / Chief Complaint</label>
+        <select id="noteAppointment">
+          <option value="">Select appointment</option>
+        </select>
+      </div>
+
+      <div class="form-group full">
+        <label for="noteSubjective">HPI / Subjective</label>
+        <textarea id="noteSubjective" placeholder="Write HPI here. Include relevant visit context, symptoms, and patient updates."></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label for="noteObjective">ROS / Physical Exam Updates</label>
+        <textarea id="noteObjective" placeholder="Brief ROS and clearly supported exam findings."></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label for="noteAssessment">Assessment / Diagnoses</label>
+        <textarea id="noteAssessment" placeholder="List diagnoses and/or assessment summary."></textarea>
+      </div>
+
+      <div class="form-group full">
+        <label for="notePlan">Care Plan</label>
+        <textarea id="notePlan" placeholder="Numbered care plan. Use past tense for completed counseling/actions and future tense only for planned next steps."></textarea>
+      </div>
+
+      <div id="noteFormMessage" class="message"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-secondary" type="button" onclick="closeCreateNoteModal()">Cancel</button>
+      <button class="btn-primary" type="button" onclick="saveProgressNote()">Save Note</button>
+    </div>
+  </div>
+</div>
+
   <script>
     const providerMeta = document.getElementById("providerMeta");
     const role = sessionStorage.getItem("role") || "provider";
@@ -724,8 +777,24 @@
 
     function renderSelectedPatient() {
       const patient = selectedPatientData.patient;
+      const userAccount = selectedPatientData.userAccount;
+      const createButton = document.getElementById("createPatientAccountButton");
+
       document.getElementById("selectedPatientName").textContent = `${patient.firstName} ${patient.lastName}`;
-      document.getElementById("selectedPatientDetails").textContent = `Patient ID: ${patient.patientID} | DOB: ${formatDOB(patient.dob)} | Phone: ${patient.phone || "Not listed"} | Email: ${patient.email || "Not listed"}`;
+
+      let details = `Patient ID: ${patient.patientID} | DOB: ${formatDOB(patient.dob)} | Phone: ${patient.phone || "Not listed"} | Email: ${patient.email || "Not listed"}`;
+
+      if (userAccount) {
+        details += ` | Portal Username: ${userAccount.username}`;
+      }
+
+      document.getElementById("selectedPatientDetails").textContent = details;
+
+      if ((role === "provider" || role === "medAssistant") && !userAccount) {
+        createButton.style.display = "inline-block";
+      } else {
+        createButton.style.display = "none";
+      }
     }
 
     function showSection(sectionName) {
@@ -756,7 +825,7 @@
 
     function handleMiddleChartButton() {
       if (currentSection === "charts") {
-        alert("Create Note will be built later.");
+        openCreateNoteModal();
       } else {
         showSection("charts");
       }
@@ -880,6 +949,37 @@
       document.getElementById("demoInsuranceID").value = insurance.idNumber || "";
     }
 
+    async function createPatientAccount() {
+      if (!selectedPatientID) return;
+
+      const formData = new FormData();
+      formData.append("patientID", selectedPatientID);
+
+      try {
+        const response = await fetch("../backend/patient/createAccount.php", {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status !== "success") {
+          showMessage("accountMessage", result.message || "Could not create patient account.", "error");
+          return;
+        }
+
+        showMessage(
+          "accountMessage",
+          `Patient account created. Username: ${result.username} Password: ${result.password}`,
+          "success"
+        );
+
+        await loadPatientChart(selectedPatientID);
+      } catch (error) {
+        showMessage("accountMessage", "Could not create patient account. Check backend/patient/createAccount.php.", "error");
+      }
+    }  
+
     async function saveDemographics() {
       if (!selectedPatientID) return;
 
@@ -946,8 +1046,144 @@
     }
 
     function editNote(noteID) {
-      alert("Editing progress notes will be built later.");
+      const note = (selectedPatientData.notes || []).find(item => String(item.noteID) === String(noteID));
+      if (!note) return;
+
+      document.getElementById("createNoteModalTitle").textContent = "Edit Progress Note";
+
+      populateAppointmentSelect(note.appointmentID);
+
+      document.getElementById("noteAppointment").value = note.appointmentID;
+      document.getElementById("noteAppointment").disabled = true;
+      document.getElementById("noteSubjective").value = note.subjective || "";
+      document.getElementById("noteObjective").value = note.objective || "";
+      document.getElementById("noteAssessment").value = note.assessment || "";
+      document.getElementById("notePlan").value = note.plan || "";
+
+      document.getElementById("noteAppointment").dataset.noteID = note.noteID;
+      clearNoteFormMessage();
+
+      document.getElementById("createNoteModalBackdrop").classList.add("show");
     }
+
+    function openCreateNoteModal() {
+      if (!selectedPatientData) return;
+
+      document.getElementById("createNoteModalTitle").textContent = "Create Progress Note";
+      document.getElementById("noteAppointment").disabled = false;
+      document.getElementById("noteAppointment").dataset.noteID = "";
+
+      populateAppointmentSelect();
+
+      document.getElementById("noteSubjective").value = "";
+      document.getElementById("noteObjective").value = "";
+      document.getElementById("noteAssessment").value = "";
+      document.getElementById("notePlan").value = "";
+
+      clearNoteFormMessage();
+
+      document.getElementById("createNoteModalBackdrop").classList.add("show");
+    }
+
+    function closeCreateNoteModal() {
+      document.getElementById("createNoteModalBackdrop").classList.remove("show");
+    }
+
+    function populateAppointmentSelect(selectedAppointmentID = "") {
+      const select = document.getElementById("noteAppointment");
+      const appointments = selectedPatientData.appointments || [];
+      const notes = selectedPatientData.notes || [];
+
+      select.innerHTML = '<option value="">Select appointment</option>';
+
+      appointments.forEach(appt => {
+        const alreadyHasNote = notes.some(note => String(note.appointmentID) === String(appt.appointmentID));
+        const isSelected = String(appt.appointmentID) === String(selectedAppointmentID);
+
+        if (alreadyHasNote && !isSelected) {
+          return;
+        }
+
+        const option = document.createElement("option");
+        option.value = appt.appointmentID;
+        option.textContent = `${formatDate(appt.apptDate)} - ${appt.reasonForVisit || "No reason listed"}`;
+
+        if (isSelected) {
+          option.selected = true;
+        }
+
+        select.appendChild(option);
+      });
+    }
+
+    async function saveProgressNote() {
+      const appointmentSelect = document.getElementById("noteAppointment");
+      const appointmentID = appointmentSelect.value;
+      const noteID = appointmentSelect.dataset.noteID || "";
+
+      const subjective = document.getElementById("noteSubjective").value.trim();
+      const objective = document.getElementById("noteObjective").value.trim();
+      const assessment = document.getElementById("noteAssessment").value.trim();
+      const plan = document.getElementById("notePlan").value.trim();
+
+      if (!appointmentID) {
+        showNoteFormMessage("Please select an appointment.", "error");
+        return;
+      }
+
+      if (!subjective && !objective && !assessment && !plan) {
+        showNoteFormMessage("Please enter note content before saving.", "error");
+        return;
+      }
+
+      const formData = new FormData();
+
+      formData.append("subjective", subjective);
+      formData.append("objective", objective);
+      formData.append("assessment", assessment);
+      formData.append("plan", plan);
+
+      let endpoint = "../backend/notes/create.php";
+
+      if (noteID) {
+        endpoint = "../backend/notes/update.php";
+        formData.append("noteID", noteID);
+      } else {
+        formData.append("appointmentID", appointmentID);
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.status !== "success") {
+          showNoteFormMessage(result.message || "Could not save progress note.", "error");
+          return;
+        }
+
+        closeCreateNoteModal();
+        await loadPatientChart(selectedPatientID);
+        showSection("charts");
+      } catch (error) {
+        showNoteFormMessage("Could not save progress note. Check backend/notes/create.php or update.php.", "error");
+      }
+    }
+
+    function showNoteFormMessage(text, type) {
+      const box = document.getElementById("noteFormMessage");
+      box.textContent = text;
+      box.className = `message show ${type}`;
+    }
+
+    function clearNoteFormMessage() {
+      const box = document.getElementById("noteFormMessage");
+      box.textContent = "";
+      box.className = "message";
+    }  
 
     function closeNoteModal() {
       document.getElementById("noteModalBackdrop").classList.remove("show");
@@ -981,6 +1217,18 @@
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
+
+    function getPatientIDFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("patientID");
+    }
+
+    const patientIDFromUrl = getPatientIDFromUrl();
+
+    if (patientIDFromUrl) {
+      selectPatientForChart(patientIDFromUrl);
+    }
+
   </script>
 </body>
 </html>

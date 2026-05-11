@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADA Clinic Patient Portal</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: #90EE90;
+      color: #1f2d1f;
+    }
+
+    .page-shell {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #ffffff;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .top-header {
+      background: #0f570f;
+      color: #ffffff;
+      padding: 22px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .clinic-title {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .portal-subtitle {
+      font-size: 14px;
+      opacity: 0.92;
+    }
+
+    .patient-banner {
+      padding: 18px 20px;
+      background: #f7fcf7;
+      border-bottom: 1px solid #dbe8db;
+    }
+
+    .patient-name {
+      color: #0f570f;
+      font-size: 21px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .patient-details {
+      color: #526052;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .content {
+      padding: 18px 16px 28px;
+    }
+
+    .section-card {
+      border: 1px solid #dbe8db;
+      border-radius: 10px;
+      background: #ffffff;
+      overflow: hidden;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+    }
+
+    .section-header {
+      background: #0f570f;
+      color: #ffffff;
+      padding: 14px 16px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .section-body {
+      padding: 12px 16px;
+    }
+
+    .data-row {
+      padding: 12px 0;
+      border-bottom: 1px solid #edf3ed;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .data-row:last-child {
+      border-bottom: none;
+    }
+
+    .row-title {
+      color: #142414;
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .row-detail {
+      color: #566356;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .empty-state {
+      color: #8c998c;
+      font-style: italic;
+      padding: 10px 0;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: #0f570f;
+      color: #ffffff;
+      padding: 9px 13px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .btn-secondary {
+      background: #dff4df;
+      color: #0f570f;
+      border: 1px solid #a9d2a9;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+
+    .logout-wrap {
+      padding: 4px 16px 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .message {
+      margin: 14px 16px;
+      padding: 12px;
+      border-radius: 5px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.error {
+      color: #8f1d1d;
+      background: #fdecec;
+      border: 1px solid #e4bbbb;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.42);
+      align-items: center;
+      justify-content: center;
+      z-index: 90;
+      padding: 18px;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 680px;
+      max-height: 88vh;
+      overflow-y: auto;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid #dfeade;
+      background: #f7fcf7;
+    }
+
+    .modal-header h2 {
+      color: #0f570f;
+      font-size: 20px;
+    }
+
+    .close-btn {
+      background: transparent;
+      color: #425242;
+      font-size: 26px;
+      line-height: 1;
+    }
+
+    .modal-body {
+      padding: 18px;
+      line-height: 1.55;
+    }
+
+    .note-section {
+      margin-bottom: 18px;
+    }
+
+    .note-section h3 {
+      color: #0f570f;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+
+    .note-section p {
+      color: #334033;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 520px) {
+      .page-shell {
+        min-height: 100vh;
+        box-shadow: none;
+      }
+
+      .content {
+        padding: 14px 12px 24px;
+      }
+
+      .data-row {
+        grid-template-columns: 1fr;
+      }
+
+      .btn-primary {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="top-header">
+      <div class="clinic-title">ADA Clinic</div>
+      <div class="portal-subtitle">Patient Portal</div>
+    </header>
+
+    <section class="patient-banner">
+      <div class="patient-name" id="patientName">Loading patient...</div>
+      <div class="patient-details" id="patientDetails"></div>
+    </section>
+
+    <div id="pageMessage" class="message"></div>
+
+    <main class="content">
+      <section class="section-card">
+        <div class="section-header">Medications</div>
+        <div class="section-body" id="medicationsBox">
+          <div class="empty-state">Loading medications...</div>
+        </div>
+      </section>
+
+      <section class="section-card">
+        <div class="section-header">Progress Notes</div>
+        <div class="section-body" id="progressNotesBox">
+          <div class="empty-state">Loading progress notes...</div>
+        </div>
+      </section>
+    </main>
+
+    <div class="logout-wrap">
+      <button class="btn-secondary" type="button" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="noteModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+      <div class="modal-header">
+        <h2 id="noteModalTitle">Progress Note</h2>
+        <button class="close-btn" type="button" onclick="closeNoteModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="noteModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    let patientData = null;
+
+    const patientID = sessionStorage.getItem("patientID");
+    const role = sessionStorage.getItem("role");
+
+    if (!patientID || role !== "patient") {
+      window.location.href = "login.html";
+    }
+
+    async function loadPatientPortal() {
+      try {
+        const response = await fetch(`../backend/patient/chart.php?patientID=${encodeURIComponent(patientID)}`);
+        const data = await response.json();
+
+        if (data.status !== "success") {
+          showMessage(data.message || "Could not load patient portal.");
+          return;
+        }
+
+        patientData = data;
+        renderPatientHeader();
+        renderMedications();
+        renderProgressNotes();
+      } catch (error) {
+        showMessage("Could not load patient portal. Check backend/patient/chart.php.");
+      }
+    }
+
+    function renderPatientHeader() {
+      const patient = patientData.patient || {};
+      document.getElementById("patientName").textContent = `${patient.firstName || ""} ${patient.lastName || ""}`.trim() || "Patient";
+      document.getElementById("patientDetails").textContent = `Patient ID: ${patient.patientID || ""} | DOB: ${formatDOB(patient.dob)} | Phone: ${patient.phone || "Not listed"}`;
+    }
+
+    function renderMedications() {
+      const box = document.getElementById("medicationsBox");
+      const medications = patientData.chart?.medications || "";
+
+      const items = medications
+        .split(/\n|,/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+      if (items.length === 0) {
+        box.innerHTML = '<div class="empty-state">No medications listed.</div>';
+        return;
+      }
+
+      box.innerHTML = items.map(item => `
+        <div class="data-row">
+          <div>
+            <div class="row-title">Medication</div>
+            <div class="row-detail">${escapeHtml(item)}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    function renderProgressNotes() {
+      const box = document.getElementById("progressNotesBox");
+      const notes = patientData.notes || [];
+
+      if (notes.length === 0) {
+        box.innerHTML = '<div class="empty-state">No progress notes available.</div>';
+        return;
+      }
+
+      box.innerHTML = notes.map(note => `
+        <div class="data-row">
+          <div>
+            <div class="row-title">${formatDate(note.apptDate)} - ${escapeHtml(note.chiefComplaint || note.reasonForVisit || "Visit Note")}</div>
+            <div class="row-detail">Tap View to read this progress note.</div>
+          </div>
+          <button class="btn-primary" type="button" onclick="viewNote('${note.noteID}')">View</button>
+        </div>
+      `).join("");
+    }
+
+    function viewNote(noteID) {
+      const note = (patientData.notes || []).find(item => String(item.noteID) === String(noteID));
+      if (!note) return;
+
+      document.getElementById("noteModalTitle").textContent = `Progress Note - ${formatDate(note.apptDate)}`;
+      document.getElementById("noteModalBody").innerHTML = `
+        <div class="note-section"><h3>Chief Complaint</h3><p>${escapeHtml(note.chiefComplaint || note.reasonForVisit || "Not listed")}</p></div>
+        <div class="note-section"><h3>HPI / Subjective</h3><p>${escapeHtml(note.subjective || "Not listed")}</p></div>
+        <div class="note-section"><h3>ROS / Physical Exam Updates</h3><p>${escapeHtml(note.objective || "Not listed")}</p></div>
+        <div class="note-section"><h3>Assessment</h3><p>${escapeHtml(note.assessment || "Not listed")}</p></div>
+        <div class="note-section"><h3>Care Plan</h3><p>${escapeHtml(note.plan || "Not listed")}</p></div>
+      `;
+      document.getElementById("noteModalBackdrop").classList.add("show");
+    }
+
+    function closeNoteModal() {
+      document.getElementById("noteModalBackdrop").classList.remove("show");
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = "login.html";
+    }
+
+    function showMessage(text) {
+      const box = document.getElementById("pageMessage");
+      box.textContent = text;
+      box.className = "message show error";
+    }
+
+    function formatDOB(dob) {
+      if (!dob) return "Not listed";
+      const parts = dob.split("-");
+      if (parts.length !== 3) return dob;
+      return `${parts[1]}/${parts[2]}/${parts[0]}`;
+    }
+
+    function formatDate(dateTime) {
+      if (!dateTime) return "";
+      const date = new Date(String(dateTime).replace(" ", "T"));
+      if (Number.isNaN(date.getTime())) return dateTime;
+      return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")}/${date.getFullYear()}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    loadPatientPortal();
+  </script>
+</body>
+</html>
+

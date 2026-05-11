@@ -46,6 +46,24 @@
       gap: 8px;
     }
 
+    .nav-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .logout-button {
+      background: #0f570f;
+      color: #ffffff;
+      padding: 10px 18px;
+      font-size: 14px;
+      margin-bottom: 0;
+    }
+
+    .logout-button:hover {
+      background: #0b430b;
+    }
+
     .tab {
       border: 1px solid #b7d7b7;
       border-bottom: none;
@@ -96,6 +114,20 @@
       font-size: 14px;
     }
 
+    .date-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .date-controls input {
+      padding: 8px 10px;
+      border: 1px solid #c9d6c9;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
     .schedule-table {
       width: 100%;
       border-collapse: collapse;
@@ -133,7 +165,7 @@
     }
 
     .actions-cell {
-      width: 365px;
+      width: 470px;
       text-align: right;
       white-space: nowrap;
       vertical-align: middle;
@@ -172,6 +204,7 @@
       gap: 6px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      align-items: center;
       padding: 10px 0;
       border-bottom: 1px solid #edf4ed;
     }
@@ -444,17 +477,30 @@
   <div class="app-shell">
     <header class="top-header">
       <div class="clinic-title">ADA Clinic</div>
-      <nav class="tabs" aria-label="Provider portal navigation">
-        <button class="tab active" type="button">Appointments</button>
-        <a class="tab" href="Charts.html">Patient Chart</a>
-      </nav>
+
+      <div class="nav-row">
+        <nav class="tabs" aria-label="Provider portal navigation">
+          <button class="tab active" type="button">Appointments</button>
+          <a class="tab" href="Charts.html">Patient Chart</a>
+        </nav>
+
+        <button class="logout-button" type="button" onclick="logout()">Log Out</button>
+      </div>
     </header>
 
     <main class="page-content">
       <section class="panel">
         <div class="panel-header">
-          <h1>Provider Appointments</h1>
-          <div class="provider-meta" id="providerMeta">Provider view</div>
+          <div>
+            <h1>Provider Appointments</h1>
+            <div class="provider-meta" id="providerMeta">Provider view</div>
+          </div>
+
+          <div class="date-controls">
+            <input type="date" id="scheduleDateInput" onchange="changeScheduleDate()" />
+            <button class="btn-secondary" type="button" onclick="goToToday()">Today</button>
+            <button class="btn-secondary" type="button" onclick="loadAppointments()">Refresh</button>
+          </div>
         </div>
 
         <table class="schedule-table">
@@ -635,7 +681,8 @@
 
     const providerID = sessionStorage.getItem("providerID") || "1";
     const medAssistantID = sessionStorage.getItem("medAssistantID") || "";
-    const scheduleDate = new Date().toISOString().split("T")[0];
+    let scheduleDate = new Date().toISOString().split("T")[0];
+    document.getElementById("scheduleDateInput").value = scheduleDate;
     const providerUsername = sessionStorage.getItem("username") || "Provider";
     providerMeta.textContent = `Signed in as ${providerUsername} | Provider ID: ${providerID}`;
 
@@ -662,6 +709,17 @@
         schedule[time] = [];
         current.setMinutes(current.getMinutes() + 15);
       }
+    }
+
+    function changeScheduleDate() {
+      scheduleDate = document.getElementById("scheduleDateInput").value;
+      loadAppointments();
+    }
+
+    function goToToday() {
+      scheduleDate = new Date().toISOString().split("T")[0];
+      document.getElementById("scheduleDateInput").value = scheduleDate;
+      loadAppointments();
     }
       
     async function loadAppointments() {
@@ -727,6 +785,7 @@
             const actions = document.createElement("div");
             actions.className = "inline-actions";
             actions.innerHTML = `
+              <button class="btn-primary" type="button" onclick="openPatientChart('${appt.patientID}')">Chart</button>
               <button class="btn-small" type="button" title="Add another patient" onclick="openScheduleModal('${time}')">+</button>
               <button class="btn-muted" type="button" onclick="openScheduleModal('${time}', ${appt.appointmentID})">Edit</button>
               ${appt.checkInTime ? `<button class="btn-time" type="button">${appt.checkInTime}</button>` : `<button class="btn-muted" type="button" onclick="checkInPatient('${time}', ${appt.appointmentID})">Check In</button>`}
@@ -775,6 +834,10 @@
       activeTimeSlot = null;
       editingAppointmentID = null;
       clearScheduleForm();
+    }
+
+    function openPatientChart(patientID) {
+      window.location.href = `Charts.html?patientID=${encodeURIComponent(patientID)}`;
     }
 
     function clearScheduleForm() {
@@ -947,6 +1010,11 @@
       pendingDeleteTime = null;
       pendingDeleteAppointmentID = null;
       document.getElementById("deleteModalBackdrop").classList.remove("show");
+    }
+
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = "login.html";
     }
 
     async function confirmDeleteAppointment() {
