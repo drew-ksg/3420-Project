@@ -49,6 +49,16 @@ try {
     $insuranceStmt->execute([$patientID]);
     $insurance = $insuranceStmt->fetch(PDO::FETCH_ASSOC);
 
+    $userStmt = $conn->prepare("
+        SELECT userID, username, role, patientID
+        FROM UserAccount
+        WHERE patientID = ?
+          AND role = 'patient'
+        LIMIT 1
+    ");
+    $userStmt->execute([$patientID]);
+    $userAccount = $userStmt->fetch(PDO::FETCH_ASSOC);
+
     $appointmentsStmt = $conn->prepare("
         SELECT appointmentID, patientID, providerID, medAssistantID, apptDate, reasonForVisit, status
         FROM Appointment
@@ -93,6 +103,7 @@ try {
         "insurance" => $insurance,
         "appointments" => $appointments,
         "notes" => $notes,
+        "userAccount" => $userAccount,
         "documents" => $documents
     ]);
 } catch (Exception $e) {
