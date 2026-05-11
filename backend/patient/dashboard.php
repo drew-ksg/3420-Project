@@ -1,5 +1,4 @@
 <?php
-#Will contain all infromation for the patient dashboard
 require("../dbConnection.php");
 
 $conn = connect();
