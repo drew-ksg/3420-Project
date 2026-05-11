@@ -1,6 +1,4 @@
 <?php
-#Delete a patient from the database
-#Wont work until ON DELETE CASCADE is set up for all tables
 require("../dbConnection.php");
 
 $conn = connect();
