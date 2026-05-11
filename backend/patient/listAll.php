@@ -1,5 +1,4 @@
 <?php
-#List all patients and their info using the patientView
 
 require("../dbConnection.php");
 
