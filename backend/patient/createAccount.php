@@ -73,14 +73,6 @@ try {
 
     $randomPassword = bin2hex(random_bytes(4));
 
-    /*
-      Your current login compares plain text:
-      if ($password !== $user["passwordHash"])
-
-      So this stores the temporary password directly.
-      Later, if you switch login.php to password_verify(),
-      replace this with password_hash($randomPassword, PASSWORD_DEFAULT).
-    */
     $passwordToStore = $randomPassword;
 
     $insertStmt = $conn->prepare("
