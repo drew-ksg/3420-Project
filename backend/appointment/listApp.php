@@ -1,5 +1,4 @@
 <?php
-#List all appointment info using view_PatientAppointments
 require("../dbConnection.php");
 
 $conn = connect();
