@@ -73,7 +73,7 @@ try {
 
     $randomPassword = bin2hex(random_bytes(4));
 
-    $passwordToStore = $randomPassword;
+    $passwordToStore = password_hash($randomPassword, PASSWORD_DEFAULT);
 
     $insertStmt = $conn->prepare("
         INSERT INTO UserAccount (

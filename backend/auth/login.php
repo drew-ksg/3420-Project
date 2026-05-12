@@ -51,7 +51,7 @@ if (!$user) {
     exit;
 }
 
-if ($password !== $user["passwordHash"]) {
+if (!password_verify($password, $user["passwordHash"])) {
     echo json_encode([
         "status" => "error",
         "message" => "Invalid username or password"
